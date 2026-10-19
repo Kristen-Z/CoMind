@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "comind"
+version = "1.0.0"
+description = "CoMind: Understanding Collaborative Human Activity from Multiple Minds and Views"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "opencv-python",
+    "pillow",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.66"]
+claude = ["anthropic>=0.40"]
+gemini = ["google-genai>=1.0"]
+api = ["comind[openai,claude,gemini]"]
+qwen = ["torch", "transformers>=4.57", "accelerate"]
+dev = ["pytest"]
+
+[project.scripts]
+comind-infer = "comind.infer:main"
+comind-evaluate = "comind.evaluate:main"
+
+[tool.setuptools.packages.find]
+include = ["comind*"]
+
+[tool.setuptools.package-data]
+comind = ["prompts/*.txt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,32 @@
+You are an expert system for analyzing and predicting joint attention between two persons separately filming a single scene from their perspectives. The persons are working in a human-to-human collaboration scenario. Joint attention occurs when both individuals simultaneously focus their perception and cognitive state onto the same shared object or event.
+You are provided with a dual-view (side-by-side) image frame showing two egocentric views from two persons (left person and right person). Both halves show the EXACT SAME physical scene from two different spatial perspectives. The full concatenated image is 1408 pixels wide by 704 pixels tall: the LEFT person's view occupies x in [0, 704) and the RIGHT person's view occupies x in [704, 1408].
+Additionally, here is the transcribed speech of the two persons during the time period leading up to the moment in the provided image frame: "{transcript}"
+
+TASK:
+Carefully observe the visual interactions and social cues in the frame and analyze the moment of joint attention shown in the frame. Answer the following questions sequentially:
+1. Cue type: Analyze the frame and classify the underlying cue(s) that reveal the joint attention. Choose from one or more of these four categories (1 to 4 choices):
+   - <gaze>: The eye gaze or head pose of both individuals clearly converges onto the same target object or spatial area.
+   - <action>: The joint attention is established through a physical, functional manipulation (e.g. grasping, handing over, or manipulating a tool).
+   - <gestural>: The attention is directed via a communicative body movement (e.g. pointing a finger, holding an object up for display).
+   - <verbal>: The shared focus is established via verbal means (e.g. following a spoken instruction or comment).
+2. Object grounding: Look at the provided image frame. Based on your answers to the previous questions, locate and identify the precise object of joint attention in BOTH views SEPARATELY:
+   - Object category: Provide a short, precise category name of the object being mutually attended to by both persons.
+   - Left object bounding box: Provide the bounding box of the object of joint attention specifically within the LEFT person's egocentric view.
+   - Right object bounding box: Provide the bounding box of the EXACT SAME object specifically within the RIGHT person's egocentric view.
+
+OUTPUT FORMAT:
+Provide your final answer as a JSON list containing a single dictionary. You may think step-by-step beforehand, but do not provide any additional text in the output.
+[
+  {
+    "cue type": correct subset of ["<gaze>", "<action>", "<gestural>", "<verbal>"],
+    "object category": "<string>",
+    "left object bounding box": [<xmin_pixels>, <ymin_pixels>, <xmax_pixels>, <ymax_pixels>],
+    "right object bounding box": [<xmin_pixels>, <ymin_pixels>, <xmax_pixels>, <ymax_pixels>]
+  }
+]
+
+CRITICAL RULES:
+- All bounding box coordinates MUST be in absolute integer pixels on the provided 1408 x 704 concatenated image.
+- For `left object bounding box`, its `<xmin_pixels>` and `<xmax_pixels>` MUST STRICTLY fall in [0, 704).
+- For `right object bounding box`, its `<xmin_pixels>` and `<xmax_pixels>` MUST STRICTLY fall in [704, 1408].
+- `<ymin_pixels>` and `<ymax_pixels>` MUST fall in [0, 704] for both boxes.

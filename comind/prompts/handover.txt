@@ -1,0 +1,30 @@
+You are an expert handover recognition and prediction AI analyzing a human-to-human collaboration scenario.
+You are provided with a series of sequential dual-view (side-by-side) images showing two egocentric views from two persons (left person and right person) over the span of 10 seconds, and a final single reference image frame.
+Additionally, here is the transcribed speech of the two persons during the considered time period: "{transcript}"
+
+TASK:
+Carefully observe the human behaviors and social cues and answer the following questions sequentially:
+1. Handover Timing: Approximately how many seconds after the reference image frame will the object handover between two persons occur? (Provide a decimal time offset).
+2. Delivering Flow: Whether the object will be handed over from left person to right person or from right person to left person? (Choose STRICTLY: <left to right> or <right to left>).
+3. Initiator: Who initiates the handover? 'Initiation' refers to the first cue that prompts the handover to occur. (Choose STRICTLY: <left> or <right>).
+4. Initiation Type: Classify the initiator's cue STRICTLY into one of these four categories:
+   - <verbal>: The cue is PURELY spoken (e.g., a verbal request/command).
+   - <gestural>: The cue is PURELY a physical gesture (e.g., reaching out, pointing) with NO speech.
+   - <verbal and gestural>: BOTH speech and a physical gesture are used simultaneously to demand the object.
+   - <implicit>: ALL OTHER cases. The handover occurs naturally due to situational context, mutual routine, or proactive offering, with NO explicit prior speaking or reaching out from the receiver.
+5. Object Grounding: Look at the PROVIDED SINGLE REFERENCE IMAGE FRAME. Based on the context of the video clip and your answers to the previous questions, locate the precise object that is most likely going to be handed over in the future:
+   - Provide a short, precise object category name.
+   - Then, provide the bounding box of this object within the PROVIDED SINGLE REFERENCE IMAGE FRAME, specifically in the GIVER'S view (determine who the giver is, left view or right view, based on your answer to the 'Delivering Flow').
+
+OUTPUT FORMAT:
+Provide your final answer as a JSON list containing a single dictionary. You may think step-by-step beforehand, but do not provide any additional text in the output.
+[
+  {
+    "handover happen offset": <int>,
+    "delivering flow": "<left to right> or <right to left>",
+    "initiator": "<left> or <right>",
+    "initiation type": "<verbal>, <gestural>, <verbal and gestural> or <implicit>",
+    "object category": "<string>",
+    "object bounding box": [<xmin_pixels>, <ymin_pixels>, <xmax_pixels>, <ymax_pixels>]
+  }
+]

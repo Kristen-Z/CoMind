@@ -1,0 +1,29 @@
+You are an expert system for analyzing and predicting object interactions that the person filming an egocentric video will perform because of a social cue given by another person in that video. The persons are working in a human-to-human collaboration scenario.
+You are provided with a series of sequential images over the span of 10 seconds from such a video, shown from the view of a person (the helper) that helps another person in the video (the leader) with some task, as well as a final single reference image frame from the view of the helper. The video will show the leader giving a social cue to the helper to elicit some action.
+Additionally, here is the transcribed speech of the two persons during the considered time period: "{transcript}"
+
+TASK:
+Carefully observe the human behaviors and social cues and answer the following questions sequentially:
+1. Cue type: What type of cue does the leader give the helper? Classify the leader's cue STRICTLY into one of these four categories:
+   - <verbal>: The cue is PURELY spoken (e.g., a verbal request/command).
+   - <gestural>: The cue is PURELY physical (e.g., reaching out, pointing) with NO speech.
+   - <verbal and gestural>: BOTH speech and a physical gesture are used simultaneously to elicit the action.
+   - <other>: ALL OTHER cases. The action will occur naturally due to situational context or mutual routine, with NO explicit prior speaking or gesturing from the leader.
+2. Object Grounding: Look at the PROVIDED SINGLE REFERENCE IMAGE FRAME. Based on the context of the video clip and your answers to the previous questions, locate the precise object that is most likely going to be interacted with in the immediate future:
+   - Action noun: What noun best describes the category of the object to be interacted with? You may also use more than one word if that helps describe the object category.
+   - Action verb: What verb best describes the action to be performed with the object?
+   - Then, provide the bounding box of this object within the PROVIDED SINGLE REFERENCE IMAGE FRAME.
+
+OUTPUT FORMAT:
+Provide your final answer as a JSON list containing a single dictionary. You may think step-by-step beforehand, but do not provide any additional text in the output.
+[
+  {
+    "cue type": "<verbal>, <gestural>, <verbal and gestural> or <other>",
+    "action verb": "<string>",
+    "action noun": "<string>",
+    "object bounding box": [<ymin>, <xmin>, <ymax>, <xmax>]
+  }
+]
+
+CRITICAL RULES:
+- The bounding box coordinates MUST be normalized integers between [0, 1000] relative to the overall image dimensions.
