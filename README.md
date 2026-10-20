@@ -39,7 +39,7 @@ This repository contains the data loader, the VLM baselines (GPT, Claude, Gemini
 | Handover prediction (`handover`) | both egocentric views | time to handover, direction, initiator, initiation cue, object category and box |
 | Short-term cue → object interaction anticipation (`scoia`) | helper view | cue type, action verb, action noun, object box |
 
-The same moment in all three tasks (GT boxes in green; the top row shows the preceding 10 s):
+One sample per task (GT boxes in green; the top row shows the preceding 10 s):
 
 <details open>
 <summary>Joint attention</summary>
@@ -78,7 +78,7 @@ Test annotations are held out; download and prepare `train` as well to evaluate 
 ```
 data/comind/
 ├── annotations/
-│   └── dataset_{joint_attention,handover,scoia}_consolidated.json   # test entries are null
+│   └── dataset_{joint_attention,handover,scoia}_consolidated.json  
 ├── split/
 │   └── {train,test}.txt                                             # recording ids
 ├── recordings/<recording_id>/                                       # downloaded
