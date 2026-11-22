@@ -31,7 +31,7 @@ Cedric Zöllner,
 
 </div>
 
-This repository contains the data loader, the VLM baselines (GPT, Claude, Gemini, Qwen-VL) and the evaluation for the three CoMind benchmarks. Each sample is a reference frame, the 10 s of video before it and the speech transcript of those 10 s.
+This repository contains the data loader, the VLM baselines (GPT, Claude, Gemini, Qwen-VL), the evaluation and the Qwen3-VL fine-tuning for the three CoMind benchmarks. Each sample is a reference frame, the 10 s of video before it and the speech transcript of those 10 s.
 
 | Task | Input | Prediction |
 |---|---|---|
@@ -91,7 +91,7 @@ data/comind/
     └── transcripts/<recording_id>.json                              # speech in the preceding 10 s
 ```
 
-Each sample is identified by its recording id and the index of its reference frame (`frame_id`, 30 fps). Joint attention and handover frames are 1408×704 (two 704×704 views side by side); SCOIA frames are 1408×1408.
+Each sample is identified by its recording id and the index of its reference frame (`frame_id`, 30 fps). Joint attention and handover frames are 1408×704 (two 704×704 views side by side); SCOIA frames are 1408×1408. Some train recordings come without the side-by-side video; for these, `comind.prepare` puts it together from `mp4s/leader_trimmed_sync.mp4` and `mp4s/helper_trimmed_sync.mp4`.
 
 ```python
 from comind.data import CoMindDataset
@@ -136,6 +136,19 @@ This prints the main metrics and writes `evaluation_results.json` (overall and p
 
 If the JSON of an answer cannot be read as a whole, e.g. because reasoning with brackets precedes it, the last JSON object of the answer is used. `--strict_parsing` counts such answers as unparsable instead, as the evaluation in the paper did.
 
+## Fine-tuning
+
+[`finetune/`](finetune) contains the LoRA fine-tuning of Qwen3-VL 8B and 32B used for the models marked FT in the paper, based on [Qwen3-VL](https://github.com/QwenLM/Qwen3-VL)'s fine-tuning code. With the train split prepared:
+
+```bash
+pip install -r finetune/requirements.txt && pip install flash-attn==2.8.3 --no-build-isolation
+python finetune/prepare_data.py                                               # training conversations
+bash finetune/train.sh scoia 8b                                               # 8b or 32b, on 2 GPUs in the paper
+python finetune/infer.py --task scoia --adapter checkpoints/qwen3_vl_8b_scoia # test predictions
+```
+
+See [`finetune/README.md`](finetune/README.md) for the training data, the hyperparameters and the checkpoints used in the paper.
+
 ## Citation
 
 ```bibtex
@@ -150,4 +163,4 @@ If the JSON of an answer cannot be read as a whole, e.g. because reasoning with 
 
 ## License
 
-The code is released under the [MIT License](LICENSE). See the [project page](https://comind.ethz.ch/#license) for the dataset license.
+The code is released under the [MIT License](LICENSE), except for [`finetune/`](finetune), which builds on Qwen3-VL and is released under the [Apache License 2.0](finetune/LICENSE). See the [project page](https://comind.ethz.ch/#license) for the dataset license.

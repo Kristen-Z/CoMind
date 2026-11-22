@@ -98,6 +98,38 @@ def test_prepare(data_root, tmp_path):
         (rec / "transcripts" / "helper_trimmed_sync_transcript.json").read_text())["segments"], 16.0) == "hand"
 
 
+def test_prepare_without_side_by_side_video(data_root, tmp_path):
+    """A recording with only the leader and helper videos: the two views are placed side by side."""
+    import shutil
+
+    import cv2
+    import numpy as np
+
+    from comind import prepare
+
+    root = tmp_path / "root"
+    shutil.copytree(data_root / "annotations", root / "annotations")
+    shutil.copytree(data_root / "split", root / "split")
+    mp4s = root / "recordings" / TEST / "mp4s"
+    mp4s.mkdir(parents=True)
+    for name, value in (("leader_trimmed_sync.mp4", 200), ("helper_trimmed_sync.mp4", 40)):
+        writer = cv2.VideoWriter(str(mp4s / name), cv2.VideoWriter_fourcc(*"mp4v"), 30, (64, 64))
+        for i in range(120):
+            writer.write(np.full((64, 64, 3), value if i == 100 else 0, np.uint8))
+        writer.release()
+
+    prepare.main(["--data_root", str(root), "--tasks", "joint_attention", "--split", "test"])
+    sample = CoMindDataset("joint_attention", root=root)[0]  # frame 100
+    frame = np.asarray(sample.load_frame())
+    assert frame.shape[:2] == (704, 1408)
+    assert abs(frame[:, :600].mean() - 200) < 5 and abs(frame[:, 808:].mean() - 40) < 5  # leader left, helper right
+    assert count_frames(sample.clip_path) == 100  # frames 0..99
+    assert not CoMindDataset("joint_attention", root=root)[1].frame_path.exists()  # frame 200: past the video
+
+    (mp4s / "leader_trimmed_sync.mp4").unlink()  # one view alone is not enough
+    assert prepare.source_videos(mp4s, "leader_helper_trimmed_sync.mp4") is None
+
+
 @pytest.mark.parametrize("backend,task,expected", [
     ("openai", "handover", "yxyx_1000"), ("claude", "scoia", "yxyx_1000"),
     ("gemini", "joint_attention", "yxyx_1000"), ("gemini", "handover", "yxyx_1000"),
