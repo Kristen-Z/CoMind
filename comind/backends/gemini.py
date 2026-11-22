@@ -6,7 +6,6 @@ from .base import Backend
 class GeminiBackend(Backend):
     name = "gemini"
     default_model = "gemini-3-flash-preview"
-    bbox_format_map = {"xyxy_pixels": "xyxy_1000"}  # answers normalised when asked for pixels
 
     def __init__(self, model, api_key=None):
         super().__init__(model)

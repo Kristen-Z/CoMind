@@ -19,7 +19,7 @@ JOINT_ATTENTION = TaskSpec(
     frame_width=1408,
     frame_height=704,
     bbox_keys=("left object bounding box", "right object bounding box"),
-    bbox_format="xyxy_pixels",
+    bbox_format="yxyx_1000",
     num_frames=0,
     display_fields=(("object category", "Object"), ("cue type", "Cue")),
 )
@@ -30,7 +30,7 @@ HANDOVER = TaskSpec(
     frame_width=1408,
     frame_height=704,
     bbox_keys=("object bounding box",),
-    bbox_format="xyxy_pixels",
+    bbox_format="yxyx_1000",
     num_frames=5,
     display_fields=(("object category", "Object"), ("delivering flow", "Flow"), ("initiator", "Initiator"),
                     ("initiation type", "Init type"), ("handover happen offset", "Offset")),

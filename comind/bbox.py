@@ -1,8 +1,8 @@
 """GT boxes are [x, y, w, h] in pixels of the reference frame. Predicted boxes come in one of:
 
-    yxyx_1000:   [ymin, xmin, ymax, xmax] normalised to [0, 1000]   (SCOIA prompt)
-    xyxy_1000:   [xmin, ymin, xmax, ymax] normalised to [0, 1000]   (Qwen-VL)
-    xyxy_pixels: [xmin, ymin, xmax, ymax] in pixels                 (joint attention and handover prompts)
+    yxyx_1000:   [ymin, xmin, ymax, xmax] normalised to [0, 1000]   (what the prompts ask for)
+    xyxy_1000:   [xmin, ymin, xmax, ymax] normalised to [0, 1000]   (Qwen-VL's native format)
+    xyxy_pixels: [xmin, ymin, xmax, ymax] in pixels                 (for predictions of other methods)
 """
 
 BBOX_FORMATS = ("yxyx_1000", "xyxy_1000", "xyxy_pixels")

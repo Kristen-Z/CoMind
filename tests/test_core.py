@@ -43,3 +43,6 @@ def test_prompts():
         assert prompt_path(task).exists()
         prompt = build_prompt(task, "hello there")
         assert "hello there" in prompt and "{transcript}" not in prompt
+        # every prompt asks for [ymin, xmin, ymax, xmax] boxes normalised to [0, 1000]
+        assert "<ymin>, <xmin>, <ymax>, <xmax>" in prompt and "[0, 1000]" in prompt and "pixel" not in prompt
+        assert TASK_SPECS[task].bbox_format == "yxyx_1000"

@@ -25,6 +25,9 @@ Provide your final answer as a JSON list containing a single dictionary. You may
     "initiator": "<left> or <right>",
     "initiation type": "<verbal>, <gestural>, <verbal and gestural> or <implicit>",
     "object category": "<string>",
-    "object bounding box": [<xmin_pixels>, <ymin_pixels>, <xmax_pixels>, <ymax_pixels>]
+    "object bounding box": [<ymin>, <xmin>, <ymax>, <xmax>]
   }
 ]
+
+CRITICAL RULES:
+- The bounding box coordinates MUST be normalized integers between [0, 1000] relative to the overall image dimensions.

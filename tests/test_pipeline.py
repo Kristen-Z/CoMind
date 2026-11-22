@@ -36,7 +36,8 @@ class FakeBackend:
 
     def generate(self, prompt, frame, context_frames, seed=None):
         self.calls.append((prompt, len(context_frames)))
-        return ('[{"object bounding box": [100, 200, 200, 300], "delivering flow": "<left to right>", '
+        # GT box (100, 200, 200, 300) px on the 1408 x 704 frame, as [ymin, xmin, ymax, xmax] in [0, 1000]
+        return ('[{"object bounding box": [284, 71, 426, 142], "delivering flow": "<left to right>", '
                 '"initiator": "<right>", "initiation type": "<verbal and gestural>", '
                 '"object category": "salt", "handover happen offset": 1.0}]')
 
@@ -59,7 +60,7 @@ def test_infer_and_evaluate(data_root, tmp_path, monkeypatch):
 
     evaluate.main(["--task", "handover", "--pred_dir", str(out), "--data_root", str(data_root)])
     res = json.loads((out / "evaluation_results.json").read_text())
-    assert res["config"]["bbox_format"] == "xyxy_pixels"
+    assert res["config"]["bbox_format"] == "yxyx_1000"
     assert res["overall"]["bbox_IoU_0.50"]["AP"] == 1.0
     assert res["overall"]["handover_offset"]["accuracy"] == 1.0
 
@@ -98,8 +99,8 @@ def test_prepare(data_root, tmp_path):
 
 
 @pytest.mark.parametrize("backend,task,expected", [
-    ("openai", "handover", "xyxy_pixels"), ("claude", "scoia", "yxyx_1000"),
-    ("gemini", "handover", "xyxy_1000"), ("gemini", "scoia", "yxyx_1000"),
+    ("openai", "handover", "yxyx_1000"), ("claude", "scoia", "yxyx_1000"),
+    ("gemini", "joint_attention", "yxyx_1000"), ("gemini", "handover", "yxyx_1000"),
     ("qwen", "handover", "xyxy_1000"), ("qwen", "scoia", "xyxy_1000"),
 ])
 def test_bbox_format_per_backend(data_root, tmp_path, monkeypatch, backend, task, expected):

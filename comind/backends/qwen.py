@@ -15,7 +15,7 @@ class QwenBackend(Backend):
 
     name = "qwen"
     default_model = "Qwen/Qwen3-VL-8B-Instruct"
-    bbox_format_map = {"xyxy_pixels": "xyxy_1000", "yxyx_1000": "xyxy_1000"}  # always its native format
+    bbox_format_map = {"yxyx_1000": "xyxy_1000"}  # the base models always answer in their native format
 
     def __init__(self, model, cache_dir=None, dtype="auto", max_new_tokens=8192):
         super().__init__(model)
