@@ -1,6 +1,6 @@
 import pytest
 
-from comind.evaluation import get_evaluator
+from comind.evaluation import get_evaluator, load_predictions
 from comind.evaluation.common import category_matches, compute_ap
 
 from .conftest import ANNOTATIONS, TEST
@@ -23,9 +23,22 @@ def test_compute_ap():
     ("Paper Towel", "paper_towel", True),
     ("fruit", "vegetable_or_fruit", True),
     ("meat", "vegetable_or_fruit", False),
+    ("", "onion", False),
+    (None, "onion", False),
+    (" ", "vegetable_or_fruit", False),
+    ("onion", "", False),
 ])
 def test_category_matches(pred, gt, ok):
     assert category_matches(pred, gt) is ok
+
+
+def test_load_predictions(tmp_path):
+    (tmp_path / f"{TEST}_000100.txt").write_text('Box [1, 2] first.\n[{"object category": "onion"}]')
+    (tmp_path / f"{TEST}_000200.txt").write_text('[{"object category": "knife"}]')
+    preds, unparsable = load_predictions(tmp_path)
+    assert len(preds) == 2 and not unparsable
+    preds, unparsable = load_predictions(tmp_path, strict=True)
+    assert list(preds) == [(TEST, "000200")] and unparsable == [f"{TEST}_000100.txt"]
 
 
 def test_joint_attention():
@@ -83,6 +96,7 @@ def test_missing_gt_fields():
     o = get_evaluator("scoia").evaluate(gt, preds, "xyxy_pixels")["overall"]
     assert o["cue_type"]["total"] == 1 and o["cue_type"]["accuracy"] == 1.0
     assert o["action_verb"]["accuracy"] == 1.0
+    assert o["action_noun"]["level_1"]["accuracy"] == 0.0  # a missing noun is not correct
 
     gt = {("v", "1"): {"bounding_boxes": None, "cue_types": None, "object_category_level_1": "pan"}}
     res = get_evaluator("joint_attention").evaluate(gt, {("v", "1"): {"cue type": []}}, "xyxy_pixels")

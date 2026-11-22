@@ -29,8 +29,13 @@ def _last_json_answer(text: str):
     return None
 
 
-def parse_response(text: str):
-    """Answer dict from a raw model response, or None."""
+def parse_response(text: str, strict: bool = False):
+    """Answer dict from a raw model response, or None.
+
+    The JSON is read from the first opening to the last closing bracket. If that fails, e.g. because reasoning
+    with brackets precedes the answer, the last JSON object in the response is used; with strict=True the
+    response is unparsable instead, as in the paper's evaluation.
+    """
     text = (text or "").strip()
     if not text:
         return None
@@ -46,7 +51,7 @@ def parse_response(text: str):
     try:
         parsed = json.loads(match.group(1).strip() if match else text)
     except json.JSONDecodeError:
-        return _last_json_answer(text)
+        return None if strict else _last_json_answer(text)
     if isinstance(parsed, list):
         parsed = parsed[0] if parsed else None
     return parsed if isinstance(parsed, dict) else None

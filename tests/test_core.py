@@ -34,8 +34,10 @@ def test_parse_response():
     assert parse_response('```json\n[{"cue type": "<gaze>"}]\n```') == {"cue type": "<gaze>"}
     text = 'Roughly [280, 420, 420, 540]. Answer:\n[{"object bounding box": [1, 2, 3, 4]}]'
     assert parse_response(text) == {"object bounding box": [1, 2, 3, 4]}
+    assert parse_response(text, strict=True) is None  # as in the paper's evaluation
+    assert parse_response('Answer:\n[{"cue type": "<gaze>"}]', strict=True) == {"cue type": "<gaze>"}
     for bad in ["", "no json", "[1, 2, 3]", "[]"]:
-        assert parse_response(bad) is None
+        assert parse_response(bad) is None and parse_response(bad, strict=True) is None
 
 
 def test_prompts():

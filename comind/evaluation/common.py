@@ -8,14 +8,15 @@ from ..tasks import TaskSpec
 IOU_THRESHOLDS = (0.25, 0.50)
 
 
-def load_predictions(pred_dir) -> tuple[dict, list[str]]:
-    """({(video_id, frame_id): answer}, [unparsable files]) for all <video_id>_<frame_id>.txt."""
+def load_predictions(pred_dir, strict: bool = False) -> tuple[dict, list[str]]:
+    """({(video_id, frame_id): answer}, [unparsable files]) for all <video_id>_<frame_id>.txt.
+    strict: parse as in the paper's evaluation (see parse_response)."""
     preds, unparsable = {}, []
     for path in sorted(Path(pred_dir).glob("*.txt")):
         video_id, sep, frame_id = path.stem.rpartition("_")
         if not sep:
             continue
-        answer = parse_response(path.read_text(encoding="utf-8"))
+        answer = parse_response(path.read_text(encoding="utf-8"), strict=strict)
         if answer is None:
             unparsable.append(path.name)
         else:
@@ -39,12 +40,15 @@ def normalise_category(name) -> str:
 
 
 def category_matches(pred_name: str, gt_name: str) -> bool:
-    """Exact, substring (either direction) or any alternative of an "X_or_Y" GT name."""
+    """Exact, substring (either direction) or any alternative of an "X_or_Y" GT name. An empty (or missing)
+    name matches nothing, although the empty string is a substring of every name."""
     pred, gt = normalise_category(pred_name), normalise_category(gt_name)
+    if not pred or not gt:
+        return False
     if pred == gt:
         return True
     if "_or_" in gt:
-        return any(alt == pred or alt in pred or pred in alt for alt in (a.strip() for a in gt.split("_or_")))
+        return any(alt and (alt == pred or alt in pred or pred in alt) for alt in (a.strip() for a in gt.split("_or_")))
     return pred in gt or gt in pred
 
 

@@ -134,6 +134,8 @@ python -m comind.evaluate --task handover --split train --pred_dir results/train
 
 This prints the main metrics and writes `evaluation_results.json` (overall and per recording) to the prediction directory. The scripts above do both steps when called with `train`.
 
+If the JSON of an answer cannot be read as a whole, e.g. because reasoning with brackets precedes it, the last JSON object of the answer is used. `--strict_parsing` counts such answers as unparsable instead, as the evaluation in the paper did.
+
 ## Citation
 
 ```bibtex

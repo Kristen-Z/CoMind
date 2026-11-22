@@ -28,6 +28,8 @@ def parse_args(argv=None):
     p.add_argument("--bbox_format", type=canonical_bbox_format, metavar="{" + ",".join(BBOX_FORMATS) + "}",
                    help="default: from run_config.json")
     p.add_argument("--time_tolerance", type=float, default=DEFAULT_TIME_TOLERANCE, help="handover only, seconds")
+    p.add_argument("--strict_parsing", action="store_true",
+                   help="parse answers as in the paper's evaluation: no fallback to the last JSON object of a response")
     p.add_argument("--output", type=Path, help="default: <pred_dir>/evaluation_results.json")
     return p.parse_args(argv)
 
@@ -50,10 +52,10 @@ def main(argv=None):
     if not gt:
         raise SystemExit(f"No {args.split} annotations in {gt_path}. Test annotations are held out: "
                          "submit test predictions to the leaderboard, or evaluate on --split train.")
-    preds, unparsable = load_predictions(args.pred_dir)
+    preds, unparsable = load_predictions(args.pred_dir, strict=args.strict_parsing)
     results = evaluator.evaluate(gt, preds, bbox_format)
     results["config"] = {"gt": str(gt_path), "split": args.split, "bbox_format": bbox_format,
-                         "unparsable_files": unparsable}
+                         "strict_parsing": args.strict_parsing, "unparsable_files": unparsable}
 
     output = args.output or args.pred_dir / "evaluation_results.json"
     output.write_text(json.dumps(results, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
