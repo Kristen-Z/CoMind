@@ -59,7 +59,8 @@ def main(argv=None):
 
     output = args.output or args.pred_dir / "evaluation_results.json"
     output.write_text(json.dumps(results, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"{args.pred_dir}: {results['num_evaluated']}/{results['num_gt']} samples, {len(unparsable)} unparsable")
+    print(f"{args.pred_dir}: {results['num_answered']}/{results['num_gt']} samples answered "
+          f"({len(unparsable)} unparsable, counted as wrong)")
     print("  ".join(f"{label}={lookup(results['overall'], path):.4f}" for label, path in evaluator.headline))
 
 

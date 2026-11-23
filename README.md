@@ -134,6 +134,8 @@ python -m comind.evaluate --task handover --split train --pred_dir results/train
 
 This prints the main metrics and writes `evaluation_results.json` (overall and per recording) to the prediction directory. The scripts above do both steps when called with `train`.
 
+Every annotated sample is scored, and a missing or unparsable answer counts as wrong. IoU@0.5 is the share of samples whose predicted box overlaps a ground-truth box by IoU ≥ 0.5 (for joint attention, a box of the same view). Object categories, nouns and verbs match if they are equal up to case, spacing and plural, or if all words of one are contained in the other.
+
 If the JSON of an answer cannot be read as a whole, e.g. because reasoning with brackets precedes it, the last JSON object of the answer is used. `--strict_parsing` counts such answers as unparsable instead, as the evaluation in the paper did.
 
 ## Fine-tuning

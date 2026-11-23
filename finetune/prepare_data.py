@@ -73,7 +73,7 @@ def handover_answer(ann, spec):
     if ann.get("skip") or not ann.get("bbox"):
         return None
     return {
-        "handover happen offset": round(ann["end_time"] - ann["start_time"]),
+        "handover happen offset": round(ann["end_time"] - ann["start_time"], 1),
         "delivering flow": FLOWS.get(ann["delivering_flow"], ann["delivering_flow"]),
         "initiator": f"<{ann['initiator']}>",
         "initiation type": INITIATION_TYPES.get(frozenset(ann["initiation_type"]), "<implicit>"),

@@ -1,6 +1,6 @@
 from ..bbox import gt_to_xyxy
 from ..tasks import SCOIA
-from .common import TaskEvaluator, accuracy, category_matches, strip_tags
+from .common import TaskEvaluator, accuracy, names_match, strip_tags
 
 CUE_TYPE_MAP = {"A": "verbal", "G": "gestural", "AG": "verbal and gestural", "O": "other"}
 
@@ -8,24 +8,20 @@ NOUN_LEVELS = {"level_1": "nouns", "level_2": "nouns_level2", "level_3": "nouns_
 
 
 def verb_matches(pred_verb: str, gt_verbs: list) -> bool:
-    pred = strip_tags(pred_verb)
-    return bool(pred) and any(pred == g or pred in g or g in pred for g in map(strip_tags, gt_verbs))
+    return any(names_match(pred_verb, g) for g in gt_verbs)
 
 
 class ScoiaEvaluator(TaskEvaluator):
     spec = SCOIA
     bbox_results = {"object bounding box": "bbox"}
     headline = (
-        ("IoU@0.5", "bbox_IoU_0.50:AP"),
+        ("IoU@0.5", "bbox_IoU_0.50:accuracy"),
         ("Cue Type", "cue_type:accuracy"),
         ("Act. Verb", "action_verb:accuracy"),
         ("Act. Noun (L1)", "action_noun:level_1:accuracy"),
     )
 
-    def has_gt_box(self, ann):
-        return bool(ann.get("bbox"))
-
-    def gt_boxes(self, ann):
+    def gt_boxes(self, ann, key):
         return [gt_to_xyxy(ann["bbox"])] if ann.get("bbox") else []
 
     def gt_class(self, ann):
@@ -39,7 +35,8 @@ class ScoiaEvaluator(TaskEvaluator):
             == strip_tags(s["pred"].get("cue type", ""))
             for s in labelled
         )
-        verb_correct = sum(verb_matches(s["pred"].get("action verb", ""), s["gt"].get("verbs", [])) for s in samples)
+        with_verb = [s for s in samples if s["gt"].get("verbs")]
+        verb_correct = sum(verb_matches(s["pred"].get("action verb", ""), s["gt"]["verbs"]) for s in with_verb)
 
         nouns = {}
         for level, field in NOUN_LEVELS.items():
@@ -50,11 +47,11 @@ class ScoiaEvaluator(TaskEvaluator):
                     continue
                 total += 1
                 pred_noun = s["pred"].get("action noun", "")
-                correct += any(category_matches(pred_noun, g) for g in gt_nouns)
+                correct += any(names_match(pred_noun, g) for g in gt_nouns)
             nouns[level] = accuracy(correct, total)
 
         return {
             "cue_type": accuracy(cue_correct, len(labelled)),
-            "action_verb": accuracy(verb_correct, len(samples)),
+            "action_verb": accuracy(verb_correct, len(with_verb)),
             "action_noun": nouns,
         }

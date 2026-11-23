@@ -4,7 +4,7 @@ Additionally, here is the transcribed speech of the two persons during the consi
 
 TASK:
 Carefully observe the human behaviors and social cues and answer the following questions sequentially:
-1. Handover Timing: Approximately how many seconds after the reference image frame will the object handover between two persons occur? (Provide a decimal time offset).
+1. Handover Timing: Approximately how many seconds after the reference image frame will the object handover between two persons occur? (Provide the time offset in seconds with one decimal, e.g. 2.4).
 2. Delivering Flow: Whether the object will be handed over from left person to right person or from right person to left person? (Choose STRICTLY: <left to right> or <right to left>).
 3. Initiator: Who initiates the handover? 'Initiation' refers to the first cue that prompts the handover to occur. (Choose STRICTLY: <left> or <right>).
 4. Initiation Type: Classify the initiator's cue STRICTLY into one of these four categories:
@@ -20,7 +20,7 @@ OUTPUT FORMAT:
 Provide your final answer as a JSON list containing a single dictionary. You may think step-by-step beforehand, but do not provide any additional text in the output.
 [
   {
-    "handover happen offset": <int>,
+    "handover happen offset": <float>,
     "delivering flow": "<left to right> or <right to left>",
     "initiator": "<left> or <right>",
     "initiation type": "<verbal>, <gestural>, <verbal and gestural> or <implicit>",

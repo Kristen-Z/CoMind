@@ -15,7 +15,7 @@ def get_evaluator(task: str, **kwargs) -> TaskEvaluator:
 
 
 def lookup(results: dict, path: str):
-    """lookup(r, "bbox_IoU_0.50:AP") -> r["bbox_IoU_0.50"]["AP"], or None."""
+    """lookup(r, "bbox_IoU_0.50:accuracy") -> r["bbox_IoU_0.50"]["accuracy"], or None."""
     for key in path.split(":"):
         if not isinstance(results, dict) or key not in results:
             return None

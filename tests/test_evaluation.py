@@ -1,21 +1,13 @@
 import pytest
 
-from comind.evaluation import get_evaluator, load_predictions
-from comind.evaluation.common import category_matches, compute_ap
+from comind.evaluation import get_evaluator, load_predictions, lookup
+from comind.evaluation.common import names_match
 
 from .conftest import ANNOTATIONS, TEST
 
 
 def gt_of(task):
     return {(vid, fid): ann for vid, frames in ANNOTATIONS[task].items() for fid, ann in frames.items()}
-
-
-def test_compute_ap():
-    assert compute_ap([]) == 0.0
-    assert compute_ap([True, True]) == 1.0
-    assert compute_ap([False, False]) == 0.0
-    # precision 1.0 up to recall 0.5, then 0.5 at recall 0.5 -> 6 of 11 points at 1.0
-    assert compute_ap([True, False]) == pytest.approx(6 / 11)
 
 
 @pytest.mark.parametrize("pred,gt,ok", [
@@ -27,9 +19,18 @@ def test_compute_ap():
     (None, "onion", False),
     (" ", "vegetable_or_fruit", False),
     ("onion", "", False),
+    ("<Knife>", "knife", True),
+    ("board", "cutting board", True),
+    ("cutting board", "cuttingboard", True),
+    ("glasses", "glass", True),
+    ("cherries", "cherry", True),
+    ("boxes", "box", True),
+    ("pot", "potato", False),  # whole words only
+    ("cup", "cupboard", False),
+    ("pan", "pancake", False),
 ])
-def test_category_matches(pred, gt, ok):
-    assert category_matches(pred, gt) is ok
+def test_names_match(pred, gt, ok):
+    assert names_match(pred, gt) is ok
 
 
 def test_load_predictions(tmp_path):
@@ -44,20 +45,20 @@ def test_load_predictions(tmp_path):
 def test_joint_attention():
     gt = gt_of("joint_attention")
     preds = {
-        # left box matches GT box 1 exactly; right box is in the wrong place
+        # left box matches the left GT box; the "right" box is the left GT box, i.e. in the wrong view
         (TEST, "000100"): {"left object bounding box": [100, 100, 200, 200],
-                           "right object bounding box": [0, 600, 10, 700],
+                           "right object bounding box": [100, 100, 200, 200],
                            "cue type": ["<verbal>", "<gaze>"], "object category": "onion"},
     }
     res = get_evaluator("joint_attention").evaluate(gt, preds, "xyxy_pixels")
     o = res["overall"]
-    assert o["left_bbox_IoU_0.50"]["TP"] == 1 and o["left_bbox_IoU_0.50"]["AP"] == 1.0
-    assert o["right_bbox_IoU_0.50"]["TP"] == 0 and o["right_bbox_IoU_0.50"]["FP"] == 1
-    # FN: the unmatched right box + two GT samples with boxes but no prediction
-    assert o["right_bbox_IoU_0.50"]["FN"] == 3
-    assert o["cue_type"]["accuracy"] == 1.0  # communication == verbal
+    assert res["num_gt"] == 3 and res["num_answered"] == 1
+    # unanswered samples count as wrong: 3 samples with a left GT box, 1 with a right one
+    assert (o["left_bbox_IoU_0.50"]["correct"], o["left_bbox_IoU_0.50"]["total"]) == (1, 3)
+    assert (o["right_bbox_IoU_0.50"]["correct"], o["right_bbox_IoU_0.50"]["total"]) == (0, 1)
+    assert (o["cue_type"]["correct"], o["cue_type"]["total"]) == (1, 3)  # communication == verbal
     assert o["object_category"]["level_3"]["accuracy"] == 0.0
-    assert list(res["per_session"]) == [TEST]
+    assert sorted(res["per_session"]) == sorted({TEST, "11111111-train"})
 
 
 def test_handover_skips_flagged_entries():
@@ -70,12 +71,18 @@ def test_handover_skips_flagged_entries():
     }
     res = get_evaluator("handover").evaluate(gt, preds, "xyxy_pixels")
     o = res["overall"]
-    assert res["num_evaluated"] == 1
-    assert o["bbox_IoU_0.50"]["TP"] == 1
+    assert res["num_gt"] == 1 and res["num_answered"] == 1
+    assert o["bbox_IoU_0.50"]["accuracy"] == 1.0
     assert all(v["accuracy"] == 1.0 for v in o["multiple_choice"].values())
     assert o["handover_offset"]["correct"] == 1  # |1.2 - 1.0| <= 0.25
     assert get_evaluator("handover", time_tolerance=0.1).evaluate(gt, preds, "xyxy_pixels")[
         "overall"]["handover_offset"]["correct"] == 0
+
+    preds[(TEST, "000300")].update({"handover happen offset": "soon", "initiation type": ["<verbal>", "<gestural>"]})
+    o = get_evaluator("handover").evaluate(gt, preds, "xyxy_pixels")["overall"]
+    assert o["handover_offset"]["total"] == 1 and o["handover_offset"]["accuracy"] == 0.0  # non-numeric is wrong
+    assert o["handover_offset"]["mean_abs_error"] is None
+    assert o["multiple_choice"]["initiation_type"]["accuracy"] == 1.0  # a list with tags
 
 
 def test_scoia():
@@ -83,7 +90,7 @@ def test_scoia():
     preds = {(TEST, "000500"): {"object bounding box": [100, 100, 200, 200], "cue type": "<verbal and gestural>",
                                 "action verb": "grab", "action noun": "packages"}}
     o = get_evaluator("scoia").evaluate(gt, preds, "yxyx_1000")["overall"]
-    assert o["bbox_IoU_0.50"]["TP"] == 1  # 100/1000 * 1408 = 140.8
+    assert o["bbox_IoU_0.50"]["accuracy"] == 1.0  # 100/1000 * 1408 = 140.8
     assert o["cue_type"]["accuracy"] == 1.0
     assert o["action_verb"]["accuracy"] == 1.0
     assert o["action_noun"]["level_1"]["accuracy"] == 1.0
@@ -100,4 +107,14 @@ def test_missing_gt_fields():
 
     gt = {("v", "1"): {"bounding_boxes": None, "cue_types": None, "object_category_level_1": "pan"}}
     res = get_evaluator("joint_attention").evaluate(gt, {("v", "1"): {"cue type": []}}, "xyxy_pixels")
-    assert res["overall"]["cue_type"]["accuracy"] == 1.0
+    assert res["overall"]["cue_type"]["total"] == 0  # no GT cue types: not scored
+    assert res["overall"]["left_bbox_IoU_0.50"]["total"] == 0
+
+
+def test_unanswered_samples_are_wrong():
+    for task in ("joint_attention", "handover", "scoia"):
+        evaluator = get_evaluator(task)
+        o = evaluator.evaluate(gt_of(task), {}, "xyxy_pixels")["overall"]
+        for _, path in evaluator.headline:
+            metric = lookup(o, path.rpartition(":")[0])
+            assert metric["total"] > 0 and metric["accuracy"] == 0.0, (task, path)

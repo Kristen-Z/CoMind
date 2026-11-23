@@ -26,7 +26,7 @@ def normalise_initiator(raw: str) -> str:
 
 def normalise_initiation_type(raw) -> frozenset:
     if isinstance(raw, list):
-        return frozenset(t.strip().lower() for t in raw)
+        return frozenset(strip_tags(t) for t in raw)
     s = strip_tags(raw)
     if "verbal" in s and "gestural" in s:
         return frozenset(["verbal", "gestural"])
@@ -40,7 +40,7 @@ class HandoverEvaluator(TaskEvaluator):
     spec = HANDOVER
     bbox_results = {"object bounding box": "bbox"}
     headline = (
-        ("IoU@0.5", "bbox_IoU_0.50:AP"),
+        ("IoU@0.5", "bbox_IoU_0.50:accuracy"),
         ("Del. Flow", "multiple_choice:delivering_flow:accuracy"),
         ("Initiator", "multiple_choice:initiator:accuracy"),
         ("Init. Type", "multiple_choice:initiation_type:accuracy"),
@@ -54,27 +54,27 @@ class HandoverEvaluator(TaskEvaluator):
     def include(self, ann):
         return not ann.get("skip", False)
 
-    def has_gt_box(self, ann):
-        return bool(ann.get("bbox"))
-
-    def gt_boxes(self, ann):
+    def gt_boxes(self, ann, key):
         return [gt_to_xyxy(ann["bbox"])] if ann.get("bbox") else []
 
     def gt_class(self, ann):
         return ann.get("object_category_level_1", "unknown")
 
     def offset_metrics(self, samples) -> dict:
-        """Time to handover, correct if within the tolerance of end_time - start_time."""
+        """Time to handover, correct if within the tolerance of end_time - start_time. A missing or
+        non-numeric answer is wrong; the mean absolute error is over the numeric answers."""
         errors = []
         for s in samples:
             try:
                 pred = float(s["pred"].get("handover happen offset"))
             except (TypeError, ValueError):
                 continue
-            errors.append(abs(pred - (s["gt"]["end_time"] - s["gt"]["start_time"])))
+            if pred == pred:  # not NaN
+                errors.append(abs(pred - (s["gt"]["end_time"] - s["gt"]["start_time"])))
         return {
-            **accuracy(sum(e <= self.time_tolerance for e in errors), len(errors)),
-            "mean_abs_error": sum(errors) / len(errors) if errors else 0.0,
+            **accuracy(sum(e <= self.time_tolerance for e in errors), len(samples)),
+            "mean_abs_error": sum(errors) / len(errors) if errors else None,
+            "numeric_answers": len(errors),
             "time_tolerance": self.time_tolerance,
         }
 

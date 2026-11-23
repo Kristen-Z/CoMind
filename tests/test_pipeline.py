@@ -61,7 +61,7 @@ def test_infer_and_evaluate(data_root, tmp_path, monkeypatch):
     evaluate.main(["--task", "handover", "--pred_dir", str(out), "--data_root", str(data_root)])
     res = json.loads((out / "evaluation_results.json").read_text())
     assert res["config"]["bbox_format"] == "yxyx_1000"
-    assert res["overall"]["bbox_IoU_0.50"]["AP"] == 1.0
+    assert res["overall"]["bbox_IoU_0.50"]["accuracy"] == 1.0
     assert res["overall"]["handover_offset"]["accuracy"] == 1.0
 
 

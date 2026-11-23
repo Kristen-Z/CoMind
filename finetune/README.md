@@ -33,7 +33,7 @@ python -m comind.prepare --split train
 python finetune/prepare_data.py
 ```
 
-Each annotated sample becomes one conversation: the model gets the inputs of `comind.infer` (the reference frame, for handover and SCOIA after the 5 context frames, and the transcript) with the [benchmark prompt](../comind/prompts) of the task, and the answer is the annotation in the JSON format the prompt asks for, with boxes as `[ymin, xmin, ymax, xmax]` normalised to [0, 1000]. Samples whose annotation lacks a field of the answer are left out: handover samples marked `skip` or without a box, SCOIA samples without a cue type or box, and joint attention samples without a cue type or without a box in each view (of several boxes in a view, the largest is used).
+Each annotated sample becomes one conversation: the model gets the inputs of `comind.infer` (the reference frame, for handover and SCOIA after the 5 context frames, and the transcript) with the [benchmark prompt](../comind/prompts) of the task, and the answer is the annotation in the JSON format the prompt asks for, with boxes as `[ymin, xmin, ymax, xmax]` normalised to [0, 1000]. Samples whose annotation lacks a field of the answer are left out: handover samples marked `skip` or without a box, SCOIA samples without a cue type or box, and joint attention samples without a cue type or without a box in each view (of several boxes in a view, the largest is used). The handover offset is given in seconds with one decimal; the paper's models were trained on whole seconds.
 
 This writes `$COMIND_DATA_ROOT/finetune/<task>_train.json` and the context frames next to it: 5,574 joint attention, 309 handover and 985 SCOIA samples.
 

@@ -101,7 +101,7 @@ def test_infer_and_evaluate(data_root, tmp_path, monkeypatch):
 
     evaluate.main(["--task", "scoia", "--pred_dir", str(out), "--data_root", str(data_root)])
     res = json.loads((out / "evaluation_results.json").read_text())
-    assert res["overall"]["bbox_IoU_0.50"]["AP"] == 1.0
+    assert res["overall"]["bbox_IoU_0.50"]["accuracy"] == 1.0
 
     assert infer.run_name(str(adapter), None) == "qwen3_vl_32b_scoia_checkpoint_500"
     assert infer.run_name(str(adapter.parent), None) == "qwen3_vl_32b_scoia"
